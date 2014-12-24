@@ -1,0 +1,58 @@
+[global]
+<% unless node['ceph']['config']['fsid'].nil? -%>
+  fsid = <%= node['ceph']['config']['fsid'] %>
+<% end -%>
+<% if node['ceph']['is_mon'] -%>
+  mon initial members = <%= node['ceph']['config']['mon_initial_members'] %>
+<% end -%>
+  mon host = <%= @mon_addresses.sort.join(', ') %>
+<% if (! node['ceph']['config']['global'].nil?) -%>
+  <% node['ceph']['config']['global'].sort.each do |k, v| %>
+  <%= k %> = <%= v %>
+  <% end %>
+<% end -%>
+
+<% if (! node['ceph']['config']['osd'].nil?) -%>
+[osd]
+  <% node['ceph']['config']['osd'].sort.each do |k, v| %>
+  <%= k %> = <%= v %>
+  <% end %>
+<% end -%>
+
+<% if (! node['ceph']['config']['mon'].nil?) -%>
+[mon]
+  <% node['ceph']['config']['mon'].sort.each do |k, v| %>
+  <%= k %> = <%= v %>
+  <% end %>
+<% end -%>
+
+<% if (! node['ceph']['config']['mds'].nil?) -%>
+[mds]
+  <% node['ceph']['config']['mds'].sort.each do |key, value| -%>
+  <%= key %> = <%= value %>
+  <%   end -%>
+<% end -%>
+
+<% if (@is_rgw) -%>
+<% node['ceph']['ceph_federated']['regions'][@region][@zone].each do |master_slave_zone| %>
+[client.radosgw.<%= @region %>-<%= @zone %>-<%= master_slave_zone['id'] %>]
+  host = <%= node['hostname'] %>
+  rgw socket path = /var/run/ceph-radosgw/radosgw.<%= @region %>.<%= @zone %>.<%= master_slave_zone['id'] %>
+  admin socket = /var/run/ceph-radosgw/ceph-client.radosgw.<%= @region %>.<%= @zone %>.<%= master_slave_zone['id'] %>.asok
+  pid file = /var/run/ceph-radosgw/$name.pid
+  keyring = /etc/ceph/ceph.client.radosgw.<%= @region %>-<%= @zone %>-<%= master_slave_zone['id'] %>.keyring
+  log file = /var/log/radosgw/radosgw.log
+<% if (! node['ceph']['config']['rgw'].nil?) -%>
+  <% node['ceph']['config']['rgw'].sort.each do |k, v| %>
+  <%= k %> = <%= v %>
+  <% end %>
+<% end -%>
+<% end -%>
+<% end -%>
+
+<% node['ceph']['config-sections'].sort.each do |name, sect| %>
+[<%= name %>]
+  <% sect.sort.each do |k, v| %>
+  <%= k %> = <%= v %>
+  <% end %>
+<% end %>

@@ -15,11 +15,13 @@ directory '/etc/ceph' do
 end
 
 template '/etc/ceph/ceph.conf' do
-  source 'ceph.conf.erb'
+  source 'myceph.conf.erb'
   variables lazy {
     {
       :mon_addresses => mon_addresses,
-      :is_rgw => node['ceph']['is_radosgw']
+      :is_rgw => node['ceph']['is_radosgw'],
+      :region => node['ceph']['ceph_federated']['my_region'],
+      :zone => node['ceph']['ceph_federated']['my_zone'] 
     }
   }
   mode '0644'

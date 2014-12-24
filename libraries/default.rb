@@ -13,15 +13,15 @@ def mon_env_search_string
     end
   else
     search_string = 'ceph_is_mon:true'
-    if node['ceph']['search_environment'].is_a?(String)
+#    if node['ceph']['search_environment'].is_a?(String)
       # search for nodes with this particular env
-      search_string += " AND chef_environment:#{node['ceph']['search_environment']}"
-    elsif node['ceph']['search_environment']
+#      search_string += " AND chef_environment:#{node['ceph']['search_environment']}"
+#    elsif node['ceph']['search_environment']
       # search for any nodes with this environment
-      search_string += " AND chef_environment:#{node.chef_environment}"
-    else
+#      search_string += " AND chef_environment:#{node.chef_environment}"
+#    else
       # search for any mon nodes
-    end
+#    end
   end
   search_string
 end

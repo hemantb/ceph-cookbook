@@ -1,0 +1,45 @@
+
+LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\" \"%{Host}i\"" proxy_combined
+LogFormat "%{X-Forwarded-For}i %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\" \"%{Host}i\"" proxy_debug
+
+<% @params[:master_slave_zone_array].each do |master_slave_zone| %>
+<VirtualHost <%= master_slave_zone['port'] %>>
+<% if node['ceph']['radosgw']['rgw_port'] -%>
+FastCgiExternalServer <%= node['ceph']['radosgw']['path'] %>/s3gw.fcgi -host 127.0.0.1:<%= node['ceph']['radosgw']['rgw_port'] %>
+<% else -%>
+FastCgiExternalServer <%= node['ceph']['radosgw']['path'] %>/s3gw-<%= @params[:my_region] %>-<%= @params[:my_zone] %>-<%= master_slave_zone['id'] %>.fcgi -socket /var/run/ceph-radosgw/radosgw.<%= @params[:my_region] %>.<%= @params[:my_zone] %>.<%= master_slave_zone['id'] %>
+<% end -%>
+  ServerName <%= @params[:server_name] %>
+<% if node['ceph']['radosgw']['api_aliases'] -%>
+<%   node['ceph']['radosgw']['api_aliases'].each do |api_alias| -%>
+  ServerAlias <%= api_alias %>
+<%   end -%>
+<% end -%>
+  ServerAdmin <%= node["ceph"]["radosgw"]["admin_email"] %>
+  DocumentRoot <%= node['ceph']['radosgw']['path'] %>
+
+  RewriteEngine On
+  RewriteRule ^/([a-zA-Z0-9-_.]*)([/]?.*) /s3gw-<%= @params[:my_region] %>-<%= @params[:my_zone] %>-<%= master_slave_zone['id'] %>.fcgi?page=$1&params=$2&%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+
+  <IfModule mod_fastcgi.c>
+    <Directory <%= node['ceph']['radosgw']['path'] %>>
+      Options +ExecCGI
+      AllowOverride All
+      SetHandler fastcgi-script
+      AuthBasicAuthoritative Off
+      <%- if node[:apache][:version].to_f < 2.4 %>
+      Order allow,deny
+      Allow from all
+      <%- else %>
+      Require all granted
+      <%- end %>
+    </Directory>
+  </IfModule>
+
+  AllowEncodedSlashes On
+
+  ErrorLog /var/log/<%= node['apache']['package'] %>/error.log
+  CustomLog /var/log/<%= node['apache']['package'] %>/rgw-access.log proxy_combined
+  ServerSignature Off
+</VirtualHost>
+<% end -%>
