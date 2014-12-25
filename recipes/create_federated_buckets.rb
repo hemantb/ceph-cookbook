@@ -1,5 +1,5 @@
 #
-# Author:: Hemant Burman <hburman@walmartlabs.com
+# Author:: Hemant Burman <hemant.burman@gmail.com>
 # Cookbook Name:: ceph
 # Recipe:: create_federated_buckets
 
