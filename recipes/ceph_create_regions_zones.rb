@@ -73,7 +73,6 @@ template "#{Chef::Config[:file_cache_path]}/#{region}.json" do
 end
 
 #Create Secondary Region File us-2.json
-if !region_secondary.nil?
 template "#{Chef::Config[:file_cache_path]}/#{region_secondary}.json" do
 	source  'region.json.erb'
 	variables(
@@ -84,5 +83,18 @@ template "#{Chef::Config[:file_cache_path]}/#{region_secondary}.json" do
 		:region_name => region_secondary,
 		:region_is_master => "false"
 	)
+	only_if	{ region_secondary }
 end
+
+#Create Regions us-1 as Master Region for eu-1 and us-2 as secondary region for eu-2
+execute "adding region #{region}" do
+	Chef::Log.info("radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region}.json --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; rados -p .us.rgw.root rm region_info.default; radosgw-admin region default --rgw-region=#{region} --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}")
+
+	command "radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region}.json --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; rados -p .us.rgw.root rm region_info.default; radosgw-admin region default --rgw-region=#{region} --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}"
+end
+
+execute "adding region #{region_secondary}" do
+	Chef::Log.info("radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region_secondary}.json --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']};rados -p .us.rgw.root rm region_info.default;radosgw-admin regionmap update --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']}")
+	
+	command "radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region_secondary}.json --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']};radosgw-admin regionmap update --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']}"
 end
