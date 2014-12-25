@@ -47,6 +47,7 @@ include_recipe 'ceph::radosgw_apache2_repo'
 
 region = node['ceph']['ceph_federated']['my_region']
 zone = node['ceph']['ceph_federated']['my_zone']
+region_secondary = node['ceph']['ceph_federated']['my_region_secondary'] #us-2
 
 node['ceph']['radosgw']['apache2']['packages'].each do |pck|
   package pck
@@ -64,7 +65,7 @@ apache_module 'rewrite' do
   notifies :restart, 'service[apache2]'
 end
 
-web_app 'rgw' do
+web_app "rgw-#{region}" do
   template 'myrgw.conf.erb'
   server_name node['ceph']['radosgw']['api_fqdn']
   admin_email node['ceph']['radosgw']['admin_email']
@@ -73,6 +74,19 @@ web_app 'rgw' do
   my_region region
   my_zone zone
 end
+
+if !region_secondary.nil?
+	web_app "rgw-#{region_secondary}" do
+		template 'myrgw.conf.erb'
+		server_name node['ceph']['radosgw']['api_fqdn']
+		admin_email node['ceph']['radosgw']['admin_email']
+		ceph_rgw_addr node['ceph']['radosgw']['rgw_addr']
+		master_slave_zone_array node['ceph']['ceph_federated']['regions'][region_secondary][zone]
+		my_region region_secondary
+		my_zone zone
+	end
+end
+
 
 directory node['ceph']['radosgw']['path'] do
   owner 'root'
@@ -93,6 +107,20 @@ template "#{node['ceph']['radosgw']['path']}/s3gw-#{region}-#{zone}-#{master_sla
     :ceph_rgw_client => "client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}"
   )
 end
+end
+
+if !region_secondary.nil?
+	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |master_slave_zone|
+		template "#{node['ceph']['radosgw']['path']}/s3gw-#{region_secondary}-#{zone}-#{master_slave_zone['id']}.fcgi" do
+			source 's3gw.fcgi.erb'
+			owner 'root'
+			group 'root'
+			mode '0755'
+			variables(
+				:ceph_rgw_client => "client.radosgw.#{region_secondary}-#{zone}-#{master_slave_zone['id']}"
+			)
+		end
+	end
 end
 
 if node['platform_family'] == 'suse'

@@ -20,7 +20,8 @@ template '/etc/ceph/ceph.conf' do
     {
       :mon_addresses => mon_addresses,
       :is_rgw => node['ceph']['is_radosgw'],
-      :region => node['ceph']['ceph_federated']['my_region'],
+      :master_region => node['ceph']['ceph_federated']['my_region'],
+      :secondary_region => node['ceph']['ceph_federated']['my_region_secondary'],
       :zone => node['ceph']['ceph_federated']['my_zone'] 
     }
   }

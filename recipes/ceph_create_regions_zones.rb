@@ -4,20 +4,32 @@
 # Recipe:: ceph_create_regions_zones
 #
 
-region = node['ceph']['ceph_federated']['my_region'] #us
+region = node['ceph']['ceph_federated']['my_region'] #us-1
 zone = node['ceph']['ceph_federated']['my_zone'] #east
+region_secondary = node['ceph']['ceph_federated']['my_region_secondary'] #us-2
+
+puts "############################"
+puts region
+puts zone
+
 this_master_zone = ""
 master_endpoint = ""
 this_slave_zone = ""
 slave_endpoint = ""
 
+this_secondary_master_zone = ""
+secondary_master_endpoint = ""
+this_secondary_slave_zone = ""
+secondary_slave_endpoint = ""
+
+#Declaring Variables for Region:us-1 which is master Region and secondary counterpart is Region:eu-1 
 node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |master_slave_zone|
 	if master_slave_zone['is_master']
-		puts "INSIDE"
-		this_master_zone = "#{region}-#{zone}-#{master_slave_zone['id']}" 
-		master_endpoint = "#{master_slave_zone['endpoints']}:#{master_slave_zone['port']}"
-		this_slave_zone = "#{region}-#{master_slave_zone['slave_is']}-#{master_slave_zone['id']}"
+		this_master_zone = "#{region}-#{zone}-#{master_slave_zone['id']}" #us-1-east-1
+		master_endpoint = "#{master_slave_zone['endpoints']}:#{master_slave_zone['port']}" 
+		this_slave_zone = "#{region}-#{master_slave_zone['slave_is']}-#{master_slave_zone['id']}" #us-1-west-1
 		node['ceph']['ceph_federated']['regions'][region][master_slave_zone['slave_is']].each do |temp|
+			#slave_endpoint = "#{temp['endpoints']}:#{temp['port']}" if ! temp['is_master']		
 			if !temp['is_master']
 				slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
 			end
@@ -25,14 +37,52 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 	end
 end
 
+#Declaring Variables for Region:us-2 which is secondary for Region:eu-2
+if !region_secondary.nil?
+	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
+		if secondary_region_master_slave_zone['is_master']
+			this_secondary_master_zone = "#{region_secondary}-#{zone}-#{secondary_region_master_slave_zone['id']}" #us-2-east-1		
+			secondary_master_endpoint = "#{secondary_region_master_slave_zone['endpoints']}:#{secondary_region_master_slave_zone['port']}"
+			this_secondary_slave_zone = "#{region_secondary}-#{secondary_region_master_slave_zone['slave_is']}-#{secondary_region_master_slave_zone['id']}" #us-2-west-1
+			node['ceph']['ceph_federated']['regions'][region_secondary][secondary_region_master_slave_zone['slave_is']].each do |temp|
+				if !temp['is_master']
+					secondary_slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
+				end
+			end
+		end
+	end		
+end
+
+
+
+puts this_master_zone
+puts this_slave_zone
+puts master_endpoint
+puts slave_endpoint
+#Create Master Region File us-1.json
 template "#{Chef::Config[:file_cache_path]}/#{region}.json" do
-#template "/tmp/#{region}.json" do
 	source	'region.json.erb'
 	variables(
 		:this_master_zone => this_master_zone,
 		:this_slave_zone => this_slave_zone,
 		:master_endpoint => master_endpoint,
-		:slave_endpoint => slave_endpoint
+		:slave_endpoint => slave_endpoint,
+		:region_name => region,
+		:region_is_master => "true"
 	)
 end
 
+#Create Secondary Region File us-2.json
+if !region_secondary.nil?
+template "#{Chef::Config[:file_cache_path]}/#{region_secondary}.json" do
+	source  'region.json.erb'
+	variables(
+                :this_master_zone => this_secondary_master_zone,
+                :this_slave_zone => this_secondary_slave_zone,
+                :master_endpoint => secondary_master_endpoint,
+                :slave_endpoint => secondary_slave_endpoint,
+		:region_name => region_secondary,
+		:region_is_master => "false"
+	)
+end
+end

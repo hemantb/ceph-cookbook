@@ -6,6 +6,7 @@
 node.default['ceph']['is_radosgw'] = true
 region = node['ceph']['ceph_federated']['my_region']
 zone = node['ceph']['ceph_federated']['my_zone']
+region_secondary = node['ceph']['ceph_federated']['my_region_secondary'] #us-2
 
 include_recipe 'ceph::_common'
 include_recipe 'ceph::radosgw_install'
@@ -47,4 +48,19 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 		recursive true
 		only_if { node['platform'] == 'ubuntu' }
 	end
+end
+
+if !region_secondary.nil?
+node['ceph']['ceph_federated']['regions']["#{region_secondary}"]["#{zone}"].each do |master_slave_zone|
+        ceph_myclient "radosgw.#{region_secondary}-#{zone}-#{master_slave_zone['id']}" do
+                caps('mon' => 'allow rwx', 'osd' => 'allow rwx')
+                owner 'root'
+                group node['apache']['group']
+                mode 0640
+        end
+        directory "/var/lib/ceph/radosgw/ceph-radosgw.#{region_secondary}-#{zone}-#{master_slave_zone['id']}" do
+                recursive true
+                only_if { node['platform'] == 'ubuntu' }
+        end
+end
 end

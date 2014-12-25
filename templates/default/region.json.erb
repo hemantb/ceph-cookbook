@@ -1,6 +1,6 @@
-{ "name": "<%= node['ceph']['ceph_federated']['my_region'] %>",
-  "api_name": "<%= node['ceph']['ceph_federated']['my_region'] %>",
-  "is_master": "<%= node['ceph']['ceph_federated']['region_master'] %>",
+{ "name": "<%= @region_name %>",
+  "api_name": "<%= @region_name %>",
+  "is_master": "<%= @region_is_master %>",
   "endpoints": [
         "http:\/\/<%= @master_endpoint %>\/"],
   "master_zone": "<%= @this_master_zone %>",
