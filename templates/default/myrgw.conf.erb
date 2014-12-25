@@ -3,7 +3,7 @@ LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-A
 LogFormat "%{X-Forwarded-For}i %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\" \"%{Host}i\"" proxy_debug
 
 <% @params[:master_slave_zone_array].each do |master_slave_zone| %>
-<VirtualHost <%= master_slave_zone['port'] %>>
+<VirtualHost *:<%= master_slave_zone['port'] %>>
 <% if node['ceph']['radosgw']['rgw_port'] -%>
 FastCgiExternalServer <%= node['ceph']['radosgw']['path'] %>/s3gw.fcgi -host 127.0.0.1:<%= node['ceph']['radosgw']['rgw_port'] %>
 <% else -%>

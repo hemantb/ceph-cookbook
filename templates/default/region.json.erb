@@ -1,0 +1,24 @@
+{ "name": "<%= node['ceph']['ceph_federated']['my_region'] %>",
+  "api_name": "<%= node['ceph']['ceph_federated']['my_region'] %>",
+  "is_master": "<%= node['ceph']['ceph_federated']['region_master'] %>",
+  "endpoints": [
+        "http:\/\/<%= @master_endpoint %>\/"],
+  "master_zone": "<%= @this_master_zone %>",
+  "zones": [
+  { "name": "<%= @this_master_zone %>",
+          "endpoints": [
+                "http:\/\/<%= @master_endpoint %>\/"],
+          "log_meta": "true",
+          "log_data": "true"},
+        { "name": "<%= @this_slave_zone %>",
+          "endpoints": [
+                "http:\/\/<%= @slave_endpoint %>\/"],
+          "log_meta": "true",
+          "log_data": "true"}],
+  "placement_targets": [
+   {
+     "name": "default-placement",
+     "tags": []
+   }
+  ],
+  "default_placement": "default-placement"}

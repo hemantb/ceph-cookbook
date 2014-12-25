@@ -48,9 +48,6 @@ include_recipe 'ceph::radosgw_apache2_repo'
 region = node['ceph']['ceph_federated']['my_region']
 zone = node['ceph']['ceph_federated']['my_zone']
 
-puts region
-puts zone
-
 node['ceph']['radosgw']['apache2']['packages'].each do |pck|
   package pck
 end
