@@ -6,17 +6,10 @@
 
 region = node['ceph']['ceph_federated']['my_region'] #us
 zone = node['ceph']['ceph_federated']['my_zone'] #east
-
-puts "############################"
-puts region
-puts zone
-
 this_master_zone = ""
 master_endpoint = ""
 this_slave_zone = ""
 slave_endpoint = ""
-#puts (node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"]['id'])
-puts "############################"
 
 node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |master_slave_zone|
 	if master_slave_zone['is_master']
@@ -25,7 +18,6 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 		master_endpoint = "#{master_slave_zone['endpoints']}:#{master_slave_zone['port']}"
 		this_slave_zone = "#{region}-#{master_slave_zone['slave_is']}-#{master_slave_zone['id']}"
 		node['ceph']['ceph_federated']['regions'][region][master_slave_zone['slave_is']].each do |temp|
-			#slave_endpoint = "#{temp['endpoints']}:#{temp['port']}" if ! temp['is_master']		
 			if !temp['is_master']
 				slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
 			end
@@ -33,14 +25,6 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 	end
 end
 
-#this_master_zone = region+"-"+zone+"-"+node['ceph']['ceph_federated']['regions'][region][zone]['id']   #us-east-1
-#this_slave_zone = "#{region}-"+node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"]['slave_is']+"-"+node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"]['id'] #us-west-1
-
-
-puts this_master_zone
-puts this_slave_zone
-puts master_endpoint
-puts slave_endpoint
 template "#{Chef::Config[:file_cache_path]}/#{region}.json" do
 #template "/tmp/#{region}.json" do
 	source	'region.json.erb'
