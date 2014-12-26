@@ -191,6 +191,132 @@ This cookbook uses Test Kitchen to verify functionality. A Pull Request can't be
 5. `bundle exec kitchen test aio-ubuntu-1204`
 6. `bundle exec kitchen test aio-ubuntu-1404`
 
+### ENVIRONMENT FILE
+
+```json
+
+    "ceph": {
+      "repl_size": 1,
+      "pg_num": 100,
+      "pgp_num": 100,
+      "ceph_federated": {
+        "region_secondary_is": "eu-1",
+        "region_secondary_of": "eu-2",
+        "my_region_secondary": "us-2",
+        "my_region": "us-1",
+        "my_zone": "east",
+        "regions": {
+          "region_master": true,
+          "us-1": {
+            "is_master": true,
+            "east": [
+              {
+                "id": 1,
+                "port": "80",
+                "slave_is": "west",
+                "is_master": true,
+                "endpoints": "ceph-all"
+              },
+              {
+                "id": 2,
+                "port": "81",
+                "is_master": false,
+                "endpoints": "ceph-all"
+              }
+            ],
+            "west": [
+              {
+                "id": 1,
+                "port": "81",
+                "is_master": false,
+                "endpoints": "ceph-all-1"
+              },
+              {
+                "id": 2,
+                "port": "80",
+                "is_master": true,
+                "slave_is": "east",
+                "endpoints": "ceph-all-1"
+              }
+            ]
+          },
+          "us-2": {
+            "region_master": false,
+            "east": [
+              {
+                "id": 1,
+                "port": "9080",
+                "is_master": true,
+                "slave_is": "west",
+                "endpoints": "ceph-all"
+              },
+              {
+                "id": 2,
+                "port": "9081",
+                "is_master": false,
+                "endpoints": "ceph-all"
+              }
+            ],
+            "west": [
+              {
+                "id": 1,
+                "port": "9081",
+                "is_master": false,
+                "endpoints": "ceph-all-1"
+              },
+              {
+                "id": 2,
+                "port": "9080",
+                "is_master": true,
+                "slave_is": "east",
+                "endpoints": "ceph-all-1"
+              }
+            ]
+          }
+        },
+        "bucket_names": [
+          ".domain.rgw",
+          ".rgw.root",
+          ".rgw.control",
+          ".rgw.gc",
+          ".rgw.buckets.index",
+          ".rgw.buckets",
+          ".log",
+          ".intent-log",
+          ".usage",
+          ".users",
+          ".users.email",
+          ".users.swift",
+          ".users.uid"
+        ]
+      },
+      "monitor-secret": "AQAZlpJUGGtDERAAhoG5loe+lKjmje33AdTwuA==",
+      "config": {
+        "global": {
+          "public network": "192.168.56.1/24"
+        },
+        "fsid": "3d4dc517-d69a-42a6-a614-2e1f9d0ab5df",
+        "osd": {
+          "osd journal size": "1000"
+        }
+      },
+      "osd_devices": [
+        {
+          "device": "/var/local/osd0",
+          "type": "directory"
+        },
+        {
+          "device": "/var/local/osd1",
+          "type": "directory"
+        },
+        {
+          "device": "/var/local/osd2",
+          "type": "directory"
+        }
+      ]
+    }
+```
+
 ## LICENSE AND AUTHORS
 
 * Author: Kyle Bader <kyle.bader@dreamhost.com>
