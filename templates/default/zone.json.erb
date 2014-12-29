@@ -1,0 +1,18 @@
+{ "domain_root": "<%= @this_zone_id %>.domain.rgw",
+  "control_pool": "<%= @this_zone_id %>.rgw.control",
+  "gc_pool": "<%= @this_zone_id %>.rgw.gc",
+  "log_pool": "<%= @this_zone_id %>.log",
+  "intent_log_pool": "<%= @this_zone_id %>.intent-log",
+  "usage_log_pool": "<%= @this_zone_id %>.usage",
+  "user_keys_pool": "<%= @this_zone_id %>.users",
+  "user_email_pool": "<%= @this_zone_id %>.users.email",
+  "user_swift_pool": "<%= @this_zone_id %>.users.swift",
+  "user_uid_pool": "<%= @this_zone_id %>.users.uid",
+  "system_key": { "access_key": "", "secret_key": ""},
+  "placement_pools": [
+    { "key": "default-placement",
+      "val": { "index_pool": "<%= @this_zone_id %>.rgw.buckets.index",
+               "data_pool": "<%= @this_zone_id %>.rgw.buckets"}
+    }
+  ]
+}

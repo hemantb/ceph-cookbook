@@ -91,10 +91,59 @@ execute "adding region #{region}" do
 	Chef::Log.info("radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region}.json --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; rados -p .us.rgw.root rm region_info.default; radosgw-admin region default --rgw-region=#{region} --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}")
 
 	command "radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region}.json --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; rados -p .us.rgw.root rm region_info.default; radosgw-admin region default --rgw-region=#{region} --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}"
+	#command "radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region}.json --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}; radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region][zone][0]['id']}"
 end
 
+if !region_secondary.nil?
 execute "adding region #{region_secondary}" do
 	Chef::Log.info("radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region_secondary}.json --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']};rados -p .us.rgw.root rm region_info.default;radosgw-admin regionmap update --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']}")
 	
 	command "radosgw-admin region set --infile #{Chef::Config[:file_cache_path]}/#{region_secondary}.json --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']};radosgw-admin regionmap update --name client.radosgw.#{region_secondary}-#{zone}-#{node['ceph']['ceph_federated']['regions'][region_secondary][zone][0]['id']}"
 end
+end
+
+
+
+node['ceph']['ceph_federated']['regions'].each do |k,v| #k=us-1 v = {"is_master": true, "east": [{}],"west": [{}]}
+	v.each do |my_zone, master_slave_zone_arr|
+		if !my_zone.eql? "is_master"
+		master_slave_zone_arr.each do |master_slave_zone|
+		template "#{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json" do  #us-1-east-1.json and us-1-east-2.json
+			source 'zone.json.erb'
+			variables(
+				:this_zone_id => ".#{region}-#{my_zone}-#{master_slave_zone['id']}"	
+			)
+		end
+		execute "Adding Zone #{my_zone} for region #{k}" do
+			Chef::Log.info("radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}")			
+			command "radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']};radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}"
+		end
+		end
+		end
+	end	
+end
+
+
+#node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |master_slave_zone|
+#		template "#{Chef::Config[:file_cache_path]}/#{region}-#{zone}-#{master_slave_zone['id']}.json" do  #us-1-east-1.json and us-1-east-2.json
+#			source 'zone.json.erb'
+#			variables(
+#				:this_zone_id => ".#{region}-#{zone}-#{master_slave_zone['id']}"
+#			)
+#		end
+#end
+
+if !region_secondary.nil?
+	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
+			template "#{Chef::Config[:file_cache_path]}/#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}.json" do
+				source 'zone.json.erb'
+				variables(
+					:this_zone_id => ".#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}"
+				)
+			end
+	end	
+end
+
+
+
+
