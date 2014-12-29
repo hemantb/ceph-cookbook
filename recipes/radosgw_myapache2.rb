@@ -49,8 +49,6 @@ region = node['ceph']['ceph_federated']['my_region']
 zone = node['ceph']['ceph_federated']['my_zone']
 region_secondary = node['ceph']['ceph_federated']['my_region_secondary'] #us-2
 
-puts "HAHAHAHAHAH #{region_secondary}"
-
 node['ceph']['radosgw']['apache2']['packages'].each do |pck|
   package pck
 end
