@@ -34,6 +34,15 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 				slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
 			end
 		end
+	elsif !master_slave_zone['is_master']
+		this_master_zone = "#{region}-#{master_slave_zone['slave_of']}-#{master_slave_zone['id']}" #us-1-east-1
+		node['ceph']['ceph_federated']['regions'][region][master_slave_zone['slave_of']].each do |temp|
+			if temp['is_master']
+				master_endpoint = "#{temp['endpoints']}:#{temp['port']}"
+			end
+		this_slave_zone = "#{region}-#{zone}-#{master_slave_zone['id']}"
+		slave_endpoint = "#{master_slave_zone['endpoints']}:#{master_slave_zone['port']}"
+		end
 	end
 end
 
