@@ -8,7 +8,7 @@
   "user_email_pool": "<%= @this_zone_id %>.users.email",
   "user_swift_pool": "<%= @this_zone_id %>.users.swift",
   "user_uid_pool": "<%= @this_zone_id %>.users.uid",
-  "system_key": { "access_key": "", "secret_key": ""},
+  "system_key": { "access_key": "<%= @system_user_access_key %>", "secret_key": "<%= @system_user_secret_key %>"},
   "placement_pools": [
     { "key": "default-placement",
       "val": { "index_pool": "<%= @this_zone_id %>.rgw.buckets.index",
