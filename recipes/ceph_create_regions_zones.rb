@@ -38,7 +38,7 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 			end
 		end
 	elsif !master_slave_zone['is_master']
-		this_master_zone = "#{region}-#{master_slave_zone['slave_of']}-#{master_slave_zone['id']}" #us-1-east-1
+		this_master_zone = "#{region}-#{master_slave_zone['slave_of']}-#{master_slave_zone['id']}" #us-1-west-1
 		node['ceph']['ceph_federated']['regions'][region][master_slave_zone['slave_of']].each do |temp|
 			if temp['is_master']
 				master_endpoint = "#{temp['endpoints']}:#{temp['port']}"
@@ -50,19 +50,43 @@ node['ceph']['ceph_federated']['regions']["#{region}"]["#{zone}"].each do |maste
 end
 
 #Declaring Variables for Region:us-2 which is secondary for Region:eu-2
+#if !region_secondary.nil?
+#	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
+#		if secondary_region_master_slave_zone['is_master']
+#			this_secondary_master_zone = "#{region_secondary}-#{zone}-#{secondary_region_master_slave_zone['id']}" #us-2-east-1		
+#			secondary_master_endpoint = "#{secondary_region_master_slave_zone['endpoints']}:#{secondary_region_master_slave_zone['port']}"
+#			this_secondary_slave_zone = "#{region_secondary}-#{secondary_region_master_slave_zone['slave_is']}-#{secondary_region_master_slave_zone['id']}" #us-2-west-1
+#			node['ceph']['ceph_federated']['regions'][region_secondary][secondary_region_master_slave_zone['slave_is']].each do |temp|
+#				if !temp['is_master']
+#					secondary_slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
+#				end
+#			end
+#		end
+#	end		
+#end
+
 if !region_secondary.nil?
-	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
+	node['ceph']['ceph_federated']['regions']["#{region_secondary}"]["#{zone}"].each do |secondary_region_master_slave_zone|
 		if secondary_region_master_slave_zone['is_master']
-			this_secondary_master_zone = "#{region_secondary}-#{zone}-#{secondary_region_master_slave_zone['id']}" #us-2-east-1		
+			this_secondary_master_zone = "#{region_secondary}-#{zone}-#{secondary_region_master_slave_zone['id']}" #eu-1-west-1
 			secondary_master_endpoint = "#{secondary_region_master_slave_zone['endpoints']}:#{secondary_region_master_slave_zone['port']}"
-			this_secondary_slave_zone = "#{region_secondary}-#{secondary_region_master_slave_zone['slave_is']}-#{secondary_region_master_slave_zone['id']}" #us-2-west-1
+			this_secondary_slave_zone = "#{region_secondary}-#{secondary_region_master_slave_zone['slave_is']}-#{secondary_region_master_slave_zone['id']}" #eu-1-east-1
 			node['ceph']['ceph_federated']['regions'][region_secondary][secondary_region_master_slave_zone['slave_is']].each do |temp|
 				if !temp['is_master']
 					secondary_slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
 				end
 			end
+		elsif !secondary_region_master_slave_zone['is_master']
+			this_secondary_master_zone = "#{region_secondary}-#{secondary_region_master_slave_zone['slave_of']}-#{secondary_region_master_slave_zone['id']}" #eu-1-west-1
+			node['ceph']['ceph_federated']['regions'][region_secondary][secondary_region_master_slave_zone['slave_of']].each do |temp|
+				if temp['is_master']
+					secondary_master_endpoint = "#{temp['endpoints']}:#{temp['port']}" #us-1-west-1
+				end
+			this_secondary_slave_zone = "#{region_secondary}-#{zone}-#{secondary_region_master_slave_zone['id']}"
+			secondary_slave_endpoint = "#{secondary_region_master_slave_zone['endpoints']}:#{secondary_region_master_slave_zone['port']}"
+			end
 		end
-	end		
+	end
 end
 
 
@@ -80,7 +104,7 @@ template "#{Chef::Config[:file_cache_path]}/#{region}.json" do
 		:master_endpoint => master_endpoint,
 		:slave_endpoint => slave_endpoint,
 		:region_name => region,
-		:region_is_master => "true"
+		:region_is_master => "#{node['ceph']['ceph_federated']['regions'][region]['is_master']}"
 	)
 end
 
@@ -93,7 +117,7 @@ template "#{Chef::Config[:file_cache_path]}/#{region_secondary}.json" do
                 :master_endpoint => secondary_master_endpoint,
                 :slave_endpoint => secondary_slave_endpoint,
 		:region_name => region_secondary,
-		:region_is_master => "false"
+		:region_is_master => "#{node['ceph']['ceph_federated']['regions'][region_secondary]['is_master']}"
 	)
 	only_if	{ region_secondary }
 end
@@ -120,20 +144,20 @@ node['ceph']['ceph_federated']['regions'].each do |k,v| #k=us-1 v = {"is_master"
 	v.each do |my_zone, master_slave_zone_arr|
 		if !my_zone.eql? "is_master"
 		master_slave_zone_arr.each do |master_slave_zone|
-		template "#{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json" do  #us-1-east-1.json and us-1-east-2.json
+		template "#{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json" do  #us-1-east-1.json and us-1-east-2.json
 			source 'zone.json.erb'
 			variables(
-				:this_zone_id => ".#{region}-#{my_zone}-#{master_slave_zone['id']}",
-				:system_user_access_key => system_user_access_key,
-				:system_user_secret_key => system_user_secret_key
+				:this_zone_id => ".#{k}-#{my_zone}-#{master_slave_zone['id']}",
+				:system_user_access_key => "#{system_user_access_key}_#{k}",
+				:system_user_secret_key => "#{system_user_secret_key}_#{k}"
 			)
 		end
 		execute "Adding Zone #{my_zone} for region #{k}" do
-			Chef::Log.info("radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}")			
-			command "radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']};radosgw-admin regionmap update --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}"
+			Chef::Log.info("radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}")			
+			command "radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']};radosgw-admin regionmap update --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}"
 		end
-		execute "Adding system user #{region}-#{zone}-#{master_slave_zone['id']}" do
-			command "radosgw-admin user create --uid=\"#{region}-#{zone}-#{master_slave_zone['id']}\" --display-name=\"Region-#{region} Zone-#{zone}-#{master_slave_zone['id']}\" --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']} --access-key=#{system_user_access_key} --secret=#{system_user_secret_key} --system; radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{region}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{region}-#{zone}-#{master_slave_zone['id']}"
+		execute "Adding system user #{k}-#{zone}-#{master_slave_zone['id']}" do
+			command "radosgw-admin user create --uid=\"#{k}-#{zone}-#{master_slave_zone['id']}\" --display-name=\"Region-#{k} Zone-#{zone}-#{master_slave_zone['id']}\" --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']} --access-key=#{system_user_access_key}_#{k} --secret=#{system_user_secret_key}_#{k} --system; radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}"
 		end
 		end
 		end
@@ -150,16 +174,16 @@ end
 #		end
 #end
 
-if !region_secondary.nil?
-	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
-			template "#{Chef::Config[:file_cache_path]}/#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}.json" do
-				source 'zone.json.erb'
-				variables(
-					:this_zone_id => ".#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}"
-				)
-			end
-	end	
-end
+#if !region_secondary.nil?
+#	node['ceph']['ceph_federated']['regions'][region_secondary][zone].each do |secondary_region_master_slave_zone|
+#			template "#{Chef::Config[:file_cache_path]}/#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}.json" do
+#				source 'zone.json.erb'
+#				variables(
+#					:this_zone_id => ".#{region}-#{zone}-#{secondary_region_master_slave_zone['id']}"
+#				)
+#			end
+#	end	
+#end
 
 
 
