@@ -41,6 +41,8 @@
   admin socket = /var/run/ceph-radosgw/ceph-client.radosgw.<%= @master_region %>.<%= @zone %>.<%= master_slave_zone['id'] %>.asok
   pid file = /var/run/ceph-radosgw/$name.pid
   keyring = /etc/ceph/ceph.client.radosgw.<%= @master_region %>-<%= @zone %>-<%= master_slave_zone['id'] %>.keyring
+  rgw region = <%= @master_region %>
+  rgw zone = <%= @master_region %>-<%= @zone %>-<%= master_slave_zone['id'] %>
   log file = /var/log/radosgw/radosgw.log
 <% if (! node['ceph']['config']['rgw'].nil?) -%>
   <% node['ceph']['config']['rgw'].sort.each do |k, v| %>
@@ -59,6 +61,8 @@
   admin socket = /var/run/ceph-radosgw/ceph-client.radosgw.<%= @secondary_region %>.<%= @zone %>.<%= master_slave_zone['id'] %>.asok
   pid file = /var/run/ceph-radosgw/$name.pid
   keyring = /etc/ceph/ceph.client.radosgw.<%= @secondary_region %>-<%= @zone %>-<%= master_slave_zone['id'] %>.keyring
+  rgw region = <%= @secondary_region %>
+  rgw zone = <%= @secondary_region %>-<%= @zone %>-<%= master_slave_zone['id'] %>
   log file = /var/log/radosgw/radosgw.log
 <% if (! node['ceph']['config']['rgw'].nil?) -%>
   <% node['ceph']['config']['rgw'].sort.each do |k, v| %>
