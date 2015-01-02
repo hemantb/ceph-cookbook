@@ -1,0 +1,7 @@
+source: http://<%= @source_zone_endpoint %>
+src_access_key: <%= @access_key %>
+src_secret_key: <%= @secret_key %>
+destination: http://<%= @dest_zone_endpoint %>
+dest_access_key: <%= @access_key %>
+dest_secret_key: <%= @secret_key %>
+log_file: /var/log/radosgw/radosgw-sync-<%= @master_zone %>_<%= @slave_zone %>.log
