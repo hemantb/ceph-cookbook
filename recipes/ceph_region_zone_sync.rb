@@ -38,7 +38,7 @@ node['ceph']['ceph_federated']['regions'][region][zone].each do |master_slave_zo
 	if master_slave_zone['is_master']
 		master_zone = "#{region}-#{zone}-#{master_slave_zone['id']}"
 		master_endpoint = "#{master_slave_zone['endpoints']}:#{master_slave_zone['port']}"
-		slave_zone = "#{master_slave_zone['slave_is']}-#{master_slave_zone['id']}"
+		slave_zone = "#{region}-#{master_slave_zone['slave_is']}-#{master_slave_zone['id']}"
 		node['ceph']['ceph_federated']['regions'][region][master_slave_zone['slave_is']].each do |temp|
 			if temp['slave_of'].eql? zone
 				slave_endpoint = "#{temp['endpoints']}:#{temp['port']}"
