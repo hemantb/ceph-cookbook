@@ -195,18 +195,25 @@ This cookbook uses Test Kitchen to verify functionality. A Pull Request can't be
 
 ```json
 
+    "apache": {
+      "listen_ports": [
+        80,
+        9081
+      ]
+    },
     "ceph": {
       "repl_size": 1,
       "pg_num": 100,
       "pgp_num": 100,
       "ceph_federated": {
         "region_secondary_is": "eu-1",
+        "access_key": "testing",
+        "secret_key": "testing",
         "region_secondary_of": "eu-2",
-        "my_region_secondary": "us-2",
+        "my_region_secondary": "eu-1",
         "my_region": "us-1",
         "my_zone": "east",
         "regions": {
-          "region_master": true,
           "us-1": {
             "is_master": true,
             "east": [
@@ -216,12 +223,6 @@ This cookbook uses Test Kitchen to verify functionality. A Pull Request can't be
                 "slave_is": "west",
                 "is_master": true,
                 "endpoints": "ceph-all"
-              },
-              {
-                "id": 2,
-                "port": "81",
-                "is_master": false,
-                "endpoints": "ceph-all"
               }
             ],
             "west": [
@@ -229,47 +230,29 @@ This cookbook uses Test Kitchen to verify functionality. A Pull Request can't be
                 "id": 1,
                 "port": "81",
                 "is_master": false,
-                "endpoints": "ceph-all-1"
-              },
-              {
-                "id": 2,
-                "port": "80",
-                "is_master": true,
-                "slave_is": "east",
-                "endpoints": "ceph-all-1"
+                "endpoints": "ceph-all-1",
+                "slave_of": "east"
               }
             ]
           },
-          "us-2": {
-            "region_master": false,
+          "eu-1": {
+            "is_master": false,
             "east": [
               {
                 "id": 1,
-                "port": "9080",
-                "is_master": true,
-                "slave_is": "west",
-                "endpoints": "ceph-all"
-              },
-              {
-                "id": 2,
                 "port": "9081",
                 "is_master": false,
-                "endpoints": "ceph-all"
+                "endpoints": "ceph-all",
+                "slave_of": "west"
               }
             ],
             "west": [
               {
                 "id": 1,
-                "port": "9081",
-                "is_master": false,
-                "endpoints": "ceph-all-1"
-              },
-              {
-                "id": 2,
                 "port": "9080",
                 "is_master": true,
-                "slave_is": "east",
-                "endpoints": "ceph-all-1"
+                "endpoints": "ceph-all-1",
+                "slave_is": "east"
               }
             ]
           }
