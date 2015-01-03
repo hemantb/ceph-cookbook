@@ -107,3 +107,24 @@ template "#{node['ceph']['ceph_federated']['sync_conf_path']}/zone_sync_#{second
 	only_if { region_secondary }
 end 
 
+
+#Creating Inter Region Sync File
+master_region_endpoint = master_endpoint
+secondary_region_endpoint = secondary_master_endpoint
+
+if !node['ceph']['ceph_federated']['regions'][region]['is_master']
+	master_region_endpoint = secondary_master_endpoint
+	secondary_region_endpoint = master_endpoint
+end
+template "#{node['ceph']['ceph_federated']['sync_conf_path']}/region_sync_#{master_zone}-#{secondary_master_zone}.conf" do
+        source "zone_sync.conf.erb"
+        variables(
+		:master_zone          => master_zone,
+		:slave_zone           => secondary_master_zone,
+                :source_zone_endpoint => master_region_endpoint,
+                :dest_zone_endpoint   => secondary_region_endpoint,
+                :access_key           => access_key,
+                :secret_key           => secret_key
+        )
+	only_if { region_secondary }
+end 
