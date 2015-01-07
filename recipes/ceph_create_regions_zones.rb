@@ -157,7 +157,7 @@ node['ceph']['ceph_federated']['regions'].each do |k,v| #k=us-1 v = {"is_master"
 			command "radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']};radosgw-admin regionmap update --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}"
 		end
 		execute "Adding system user #{k}-#{zone}-#{master_slave_zone['id']}" do
-			command "radosgw-admin user create --uid=\"#{k}-#{zone}-#{master_slave_zone['id']}\" --display-name=\"Region-#{k} Zone-#{zone}-#{master_slave_zone['id']}\" --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']} --access-key=#{system_user_access_key} --secret=#{system_user_secret_key} --system; radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}"
+			command "radosgw-admin user create --uid=\"#{k}-#{master_slave_zone['id']}\" --display-name=\"Region-#{k} Zone-#{zone}-#{master_slave_zone['id']}\" --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']} --access-key=#{system_user_access_key} --secret=#{system_user_secret_key} --system; radosgw-admin zone set --rgw-zone=#{k}-#{my_zone}-#{master_slave_zone['id']} --infile #{Chef::Config[:file_cache_path]}/#{k}-#{my_zone}-#{master_slave_zone['id']}.json --name client.radosgw.#{k}-#{zone}-#{master_slave_zone['id']}"
 		end
 		end
 		end
